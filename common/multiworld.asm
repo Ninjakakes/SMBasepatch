@@ -9,9 +9,8 @@
 
 ; $70:2600: unused; formerly RPTR aka RCOUNT for item receive queue, & was moved to RAM that gets saved at save stations
 ; $70:2602: WCOUNT (elements written count) for item receive queue
-; $70:2604: SRAM saving marker
 
-; $70:2606 }
+; $70:2604 }
 ; ...      } unused
 ; $70:267F }
 
@@ -52,7 +51,6 @@
 
 !SRAM_MW_ITEMS_RECV = $702000 ; RECV queue buffer
 !SRAM_MW_ITEMS_RECV_WCOUNT = $702602
-!SRAM_SAVING = $702604
 
 ; This location is always saved to the current slot's data in SRAM on save, and loaded from SRAM slot on load.
 ; This takes the place of a global SRAM_MW_ITEM_RECV_RCOUNT, since different saves may have processed different amounts
@@ -79,10 +77,6 @@
 !SRAM_MW_CONFIG_PLAYER_ID = $703078
 
 !varia_seedint_location = $dfff00
-
-!current_save_slot = $7e0952
-
-!check_reload = $82F990 ; see freespace82_start in fast_reload.asm
 
 !Big = #$825A
 !Small = #$8289
@@ -308,19 +302,13 @@ mw_save_sram:
     ; runs just before RAM -> SRAM save
     pha : php
     %ai16()
-    lda #$0001
-    sta.l !SRAM_SAVING
+    ; no-op. actions would go here
     plp : pla
     ; restore overwritten instructions
     tax
     ldy #$0000
     rtl
 
-sm_save_done_hook:
-    lda #$0000
-    sta.l !SRAM_SAVING
-    ply : plx : clc : plb : plp
-    rtl
 
 mw_load_sram:
     ; runs just after SRAM -> RAM load complete
@@ -732,15 +720,11 @@ i_live_pickup_multiworld: ; touch PLM code
 
 mw_hook_main_game:
     jsl $A09169     ; Last routine of game mode 8 (main gameplay)
-    jsl !check_reload
     lda.l config_multiworld
     beq +
     lda.l $7e0998
     cmp #$0008
     bne +
-    lda.l $7e079B
-    cmp #$DF45      ; exclude first room of Ceres as its in Mode7 so doesnt handle message box properly
-    beq +
     jsr mw_handle_queue     ; Handle MW RECVQ only in gamemode 8
 +
     rtl
@@ -764,9 +748,6 @@ org $8180f7
 
 org $818027 ; hook saving @ $81:8000 Save to SRAM (after VARIA randomizer's hook - point being to not collide)
     jsl mw_save_sram
-
-org $81807F
-    jml sm_save_done_hook
 
 org $828BB3
     jsl mw_hook_main_game

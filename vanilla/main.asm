@@ -35,9 +35,6 @@ org $808000				; Disable copy protection screen
 ; Config flags
 incsrc ../common/config.asm
 
-; fast save and reload
-incsrc ../common/fast_reload.asm
-
 ; Super Metroid custom Samus sprite "engine" by Artheau
 ;incsrc "sprite/sprite.asm"
 
